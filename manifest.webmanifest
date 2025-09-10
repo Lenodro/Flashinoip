@@ -1,0 +1,13 @@
+{
+  "name": "Flashino",
+  "short_name": "Flashino",
+  "description": "Flashino – IP eingeben und direkt im App-Fenster öffnen.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b0f1a",
+  "theme_color": "#1d59ff",
+  "icons": [
+    { "src": "assets/flashino-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/flashino-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
