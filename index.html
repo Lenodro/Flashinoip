@@ -106,6 +106,7 @@
           <span class="chip">Arduino/C++</span>
           <button class="btn secondary" id="btnExample">Beispiel laden</button>
           <button class="btn secondary" id="btnNew">Neu</button>
+          <button class="btn" id="btnCopy">Code kopieren</button>
           <button class="btn" id="btnDownload">Als .ino speichern</button>
         </div>
         <div id="editor"></div>
@@ -197,16 +198,12 @@
     // Coden: Monaco Editor
     let editor;
     const example = `// Flashino – Arduino Beispiel
-// Blinke Flashino mit der Eingebauten LED (Pin 13 auf vielen Boards)
-
-
 // Blinkt "FLASHINO" als Morsecode mit der eingebauten LED
 
 const int LED = LED_BUILTIN;
-const int UNIT = 150; // Basisdauer in Millisekunden (anpassen nach Bedarf)
+const int UNIT = 150; // Basisdauer in Millisekunden
 
 struct MorseMap { char c; const char* code; };
-
 MorseMap MORSE_TABLE[] = {
   {'A', ".-"},   {'B', "-..."}, {'C', "-.-."}, {'D', "-.."},  {'E', "."},
   {'F', "..-."}, {'G', "--."},  {'H', "...."}, {'I', ".."},   {'J', ".---"},
@@ -219,60 +216,34 @@ MorseMap MORSE_TABLE[] = {
 const char* MESSAGE = "FLASHINO";
 
 void dot() {
-  digitalWrite(LED, HIGH);
-  delay(UNIT);
-  digitalWrite(LED, LOW);
-  delay(UNIT); // Pause zwischen Symbolen
+  digitalWrite(LED, HIGH); delay(UNIT);
+  digitalWrite(LED, LOW);  delay(UNIT);
 }
-
 void dash() {
-  digitalWrite(LED, HIGH);
-  delay(3 * UNIT);
-  digitalWrite(LED, LOW);
-  delay(UNIT); // Pause zwischen Symbolen
+  digitalWrite(LED, HIGH); delay(3*UNIT);
+  digitalWrite(LED, LOW);  delay(UNIT);
 }
-
 const char* lookupMorse(char ch) {
   if (ch >= 'a' && ch <= 'z') ch = ch - 'a' + 'A';
-  for (unsigned int i = 0; i < sizeof(MORSE_TABLE)/sizeof(MorseMap); i++) {
+  for (unsigned int i=0;i<sizeof(MORSE_TABLE)/sizeof(MorseMap);i++)
     if (MORSE_TABLE[i].c == ch) return MORSE_TABLE[i].code;
-  }
   return nullptr;
 }
-
 void blinkChar(char ch) {
   const char* code = lookupMorse(ch);
   if (!code) return;
-
-  for (const char* p = code; *p; ++p) {
-    if (*p == '.') dot();
-    else if (*p == '-') dash();
-  }
-  // zusätzliche Pause zwischen Buchstaben (wir hatten schon 1 UNIT nach letztem Symbol)
-  delay(2 * UNIT); // insgesamt 3 UNIT
+  for (const char* p=code; *p; ++p) (*p=='.') ? dot() : dash();
+  delay(2*UNIT);
 }
-
 void blinkWord(const char* text) {
-  for (const char* p = text; *p; ++p) {
-    if (*p == ' ') {
-      // Wortabstand: insgesamt 7 UNIT, aber nach letztem Symbol gab es 1 UNIT.
-      delay(6 * UNIT);
-    } else {
-      blinkChar(*p);
-    }
+  for (const char* p=text; *p; ++p) {
+    if (*p==' ') delay(6*UNIT);
+    else blinkChar(*p);
   }
-  // Nach Wortende längere Pause, bevor erneut gesendet wird
-  delay(7 * UNIT);
+  delay(7*UNIT);
 }
-
-void setup() {
-  pinMode(LED, OUTPUT);
-}
-
-void loop() {
-  blinkWord(MESSAGE);
-}
-
+void setup(){ pinMode(LED, OUTPUT); }
+void loop(){ blinkWord(MESSAGE); }
 `;
 
     // Monaco laden
@@ -311,6 +282,31 @@ void setup(){}
 void loop(){}
 `);
     });
+
+    // NEU: Code kopieren
+    const btnCopy = document.getElementById('btnCopy');
+    btnCopy.addEventListener('click', async () => {
+      if (!editor) return;
+      try {
+        await navigator.clipboard.writeText(editor.getValue());
+        const old = btnCopy.textContent;
+        btnCopy.textContent = '✔️ Kopiert';
+        btnCopy.disabled = true;
+        setTimeout(() => { btnCopy.textContent = old; btnCopy.disabled = false; }, 1500);
+      } catch (e) {
+        // Fallback, falls Clipboard-API blockiert ist
+        const ta = document.createElement('textarea');
+        ta.value = editor.getValue();
+        document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy');
+        ta.remove();
+        const old = btnCopy.textContent;
+        btnCopy.textContent = '✔️ Kopiert';
+        btnCopy.disabled = true;
+        setTimeout(() => { btnCopy.textContent = old; btnCopy.disabled = false; }, 1500);
+      }
+    });
+
     document.getElementById('btnDownload').addEventListener('click', () => {
       if (!editor) return;
       const blob = new Blob([editor.getValue()], { type: 'text/plain;charset=utf-8' });
