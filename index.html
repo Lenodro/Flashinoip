@@ -23,147 +23,241 @@
       --radius:16px;
     }
     html,body{height:100%;margin:0;background:radial-gradient(1000px 700px at 20% -10%, #183a8a55 0%, transparent 60%), var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    .wrap{min-height:100%;display:grid;place-items:center;padding:24px}
-    .card{width:100%;max-width:640px;background:linear-gradient(180deg,#0e1528,#0a1020);border:1px solid #1b2750;border-radius:var(--radius);box-shadow:0 40px 80px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden}
-    .hero{padding:28px 24px 12px;text-align:center}
-    .logo{width:96px;height:96px;border-radius:24px;display:inline-grid;place-items:center;margin:0 auto 14px;background:linear-gradient(145deg,var(--brand),var(--brand2));box-shadow:0 12px 30px rgba(29,89,255,.45)}
-    .logo img{width:78px;height:78px;object-fit:contain;filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));}
-    h1{font-size:28px;margin:8px 0 4px;letter-spacing:.2px}
-    .tagline{font-size:15px;color:var(--muted);margin-bottom:16px}
-    .chip{display:inline-flex;align-items:center;gap:8px;background:#0f1b33;border:1px solid #1d2a44;color:#c7d2fe;padding:8px 12px;border-radius:999px;font-size:13px;margin-top:8px}
-    .content{padding:12px 24px 24px}
+    .container{max-width:960px;margin:0 auto;padding:24px}
+    .card{background:linear-gradient(180deg,#0e1528,#0a1020);border:1px solid #1b2750;border-radius:var(--radius);box-shadow:0 40px 80px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden}
+    .header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 24px;border-bottom:1px solid #1b2750;background:rgba(14,20,36,.85);backdrop-filter:saturate(140%) blur(8px)}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,var(--brand),var(--brand2));box-shadow:0 8px 20px rgba(29,89,255,.35)}
+    .logo img{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+    .title{font-size:20px;font-weight:800;letter-spacing:.2px}
+    .tabs{display:flex;gap:8px}
+    .tab{background:#111829;border:1px solid #1b2750;color:#cbd5ff;padding:10px 14px;border-radius:10px;cursor:pointer}
+    .tab.active{background:linear-gradient(145deg,var(--brand),var(--brand2));color:#fff;box-shadow:0 6px 14px rgba(29,89,255,.35)}
+    .wrap{display:grid;place-items:center;padding:24px}
+    h1{font-size:28px;margin:8px 0 0}
+    .tagline{font-size:15px;color:var(--muted);margin:8px 0 0}
+    .section{display:none}
+    .section.active{display:block}
     label{display:block;font-size:14px;color:var(--muted);margin-bottom:8px}
     .input-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;background:#0e1525;border:1px solid #1d2a44;padding:10px;border-radius:12px}
     input[type="text"]{background:transparent;border:none;outline:none;color:var(--text);font-size:16px;padding:10px}
     .btn{background:var(--brand);color:#fff;border:none;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(29,89,255,.35);transition:transform .06s ease, box-shadow .2s ease}
     .btn:active{transform:translateY(1px);box-shadow:0 6px 12px rgba(29,89,255,.3)}
-    .notice{margin-top:14px;font-size:14px;color:var(--muted)}
-    .divider{height:1px;background:#15213a;margin:20px 0}
-    .foot{padding:16px 24px 22px;color:#8aa4ff;font-size:13px}
+    .btn.secondary{background:#1f2937;box-shadow:none}
+    .notice{margin-top:12px;font-size:14px;color:var(--muted)}
+    .error{color:#fda4af;margin-top:8px;font-size:14px}
+    .grid-two{display:grid;grid-template-columns:1fr;gap:16px}
+    @media (min-width: 900px){ .grid-two{grid-template-columns: 380px 1fr;} }
+
+    /* Editor */
+    #editorCard{display:flex;flex-direction:column}
+    #editorToolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px;border-bottom:1px solid #1b2750;background:#0c1224}
+    .chip{display:inline-flex;align-items:center;gap:8px;background:#0f1b33;border:1px solid #1d2a44;color:#c7d2fe;padding:8px 12px;border-radius:999px;font-size:13px}
+    #editor{width:100%;height:480px}
+    .foot{padding:16px 24px 22px;color:#8aa4ff;font-size:13px;text-align:center}
   </style>
+
+  <!-- Monaco Editor via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="hero">
-        <div class="logo">
-          <img src="assets/flashino-logo.png" alt="Flashino Logo">
-        </div>
-        <h1>Herzlich willkommen bei Flashino</h1>
-        <div class="tagline" id="tagline">Lerne. Flashe. Fertig!</div>
-        <div class="chip" id="pwaStateChip">Status: Browser</div>
+  <header class="header">
+    <div class="brand">
+      <div class="logo"><img src="assets/flashino-logo.png" alt="Flashino Logo"></div>
+      <div>
+        <div class="title">Flashino</div>
+        <div class="tagline">Lerne. Flashe. Fertig!</div>
       </div>
-
-      <div class="content">
-        <label for="ip">Bitte gib die IP-Adresse ein, die an der Tafel angezeigt wird:</label>
-        <div class="input-row">
-          <input id="ip" type="text" inputmode="decimal" placeholder="z. B. 192.168.0.42:8080 oder https://example.com" autocomplete="off" />
-          <button class="btn" id="openBtn">Weiter</button>
-        </div>
-        <div class="notice" id="hint">
-          Tipp: In der PWA geöffnet bleibt kein Safari-UI sichtbar. Du verlässt jedoch die Startseite der App.
-        </div>
-        <div class="notice" id="error" style="color:#fda4af;"></div>
-
-        <div class="divider"></div>
-
-        <div class="notice" id="installNotice">
-          Nicht als Web App installiert. Tippe auf „Teilen“ und dann „Zum Home‑Bildschirm hinzufügen“, um Flashino als Web App zu nutzen.
-        </div>
-        <div class="notice" id="installedNotice" style="display:none">
-          Flashino läuft als Web App. Du kannst diese Seite direkt über das Icon auf dem Home‑Bildschirm starten.
-        </div>
-      </div>
-
-      <div class="foot">Made with ❤️ für Schüler • Flashino</div>
     </div>
-  </div>
+    <nav class="tabs">
+      <button id="tabFlash" class="tab active">Flashen</button>
+      <button id="tabCode" class="tab">Coden</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- Flashen -->
+    <section id="sectionFlash" class="section active">
+      <div class="card wrap">
+        <div style="width:100%;max-width:640px">
+          <h1>Herzlich willkommen bei Flashino</h1>
+          <p class="tagline">Bitte gib die IP-Adresse ein, die an der Tafel angezeigt wird.</p>
+
+          <div class="input-row" style="margin-top:16px">
+            <input id="ip" type="text" inputmode="decimal" placeholder="z. B. 192.168.0.42:8080 oder https://example.com" autocomplete="off" />
+            <button class="btn" id="openBtn">Weiter</button>
+          </div>
+          <div class="error" id="error"></div>
+
+          <div class="notice" id="installNotice" style="margin-top:16px">
+            Nicht als Web App installiert. Tippe auf „Teilen“ und dann „Zum Home‑Bildschirm hinzufügen“, um Flashino als Web App zu nutzen.
+          </div>
+          <div class="notice" id="installedNotice" style="display:none;margin-top:16px">
+            Flashino läuft als Web App. Du kannst diese Seite direkt über das Icon auf dem Home‑Bildschirm starten.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Coden -->
+    <section id="sectionCode" class="section">
+      <div class="card" id="editorCard">
+        <div id="editorToolbar">
+          <span class="chip">Arduino/C++</span>
+          <button class="btn secondary" id="btnExample">Beispiel laden</button>
+          <button class="btn secondary" id="btnNew">Neu</button>
+          <button class="btn" id="btnDownload">Als .ino speichern</button>
+        </div>
+        <div id="editor"></div>
+      </div>
+      <p class="notice" style="margin-top:12px">
+        Hinweis: Dies ist ein Editor im Browser. Kompilieren/Flashen erfolgt weiterhin über deinen Flash‑Server.
+      </p>
+    </section>
+  </main>
+
+  <div class="foot">Made with ❤️ für Schüler • Flashino</div>
 
   <script>
-    // PWA-Erkennung
-    function isStandalone() {
-      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    // Tabs
+    const tabFlash = document.getElementById('tabFlash');
+    const tabCode  = document.getElementById('tabCode');
+    const sectionFlash = document.getElementById('sectionFlash');
+    const sectionCode  = document.getElementById('sectionCode');
+
+    function setTab(which){
+      const isFlash = which === 'flash';
+      tabFlash.classList.toggle('active', isFlash);
+      tabCode.classList.toggle('active', !isFlash);
+      sectionFlash.classList.toggle('active', isFlash);
+      sectionCode.classList.toggle('active', !isFlash);
     }
-    function updateInstallUI() {
-      const chip = document.getElementById('pwaStateChip');
+    tabFlash.addEventListener('click', () => setTab('flash'));
+    tabCode.addEventListener('click',  () => setTab('code'));
+
+    // PWA Hinweise
+    function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+    function updateInstallUI(){
       const installNotice = document.getElementById('installNotice');
       const installedNotice = document.getElementById('installedNotice');
-      if (isStandalone()) {
-        chip.textContent = 'Status: Web App';
-        installNotice.style.display = 'none';
-        installedNotice.style.display = 'block';
-      } else {
-        chip.textContent = 'Status: Browser';
-        installNotice.style.display = 'block';
-        installedNotice.style.display = 'none';
-      }
+      if (isStandalone()) { installNotice.style.display='none'; installedNotice.style.display='block'; }
+      else { installNotice.style.display='block'; installedNotice.style.display='none'; }
     }
     updateInstallUI();
     window.matchMedia('(display-mode: standalone)').addEventListener('change', updateInstallUI);
 
-    // Service Worker registrieren (falls vorhanden)
+    // Service Worker (unverändert)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(console.error);
       });
     }
 
-    // Eingabe verarbeiten: Direkt zur Ziel-URL navigieren (kein iframe)
+    // Flashen: direkte Navigation (kein iframe)
     const ipInput = document.getElementById('ip');
     const openBtn = document.getElementById('openBtn');
     const errorEl = document.getElementById('error');
 
-    // Erlaubt: IP/IPv6/localhost/*.local (http/https) und beliebige https-Domains (für Tests)
-    function normalizeUrl(input) {
+    function normalizeUrl(input){
       let value = (input || '').trim();
       if (!value) return null;
-
       if (!/^https?:\/\//i.test(value)) value = 'http://' + value;
-
-      try {
+      try{
         const url = new URL(value);
         const host = url.hostname;
-
         const isIPv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
-        const isIPv6 = host.includes(':'); // einfache Heuristik; IPv6 meist in [...]
+        const isIPv6 = host.includes(':');
         const isLocalName = /^(localhost|flashino|[a-z0-9-]+\.local)$/i.test(host);
-        const isHttpsDomain = url.protocol === 'https:' && !(isIPv4 || isIPv6 || isLocalName);
-
-        // http nur lokal erlauben; https überall
-        const isHttpAndLocal = url.protocol === 'http:' && (isIPv4 || isIPv6 || isLocalName);
-
-        if (isHttpsDomain || isHttpAndLocal || isIPv4 || isIPv6 || isLocalName) {
-          return url.toString();
-        }
+        const isHttpsDomain = url.protocol === 'https:' && !(isIPv4||isIPv6||isLocalName);
+        const isHttpAndLocal = url.protocol === 'http:' && (isIPv4||isIPv6||isLocalName);
+        if (isHttpsDomain || isHttpAndLocal || isIPv4 || isIPv6 || isLocalName) return url.toString();
         return null;
-      } catch {
-        return null;
-      }
+      }catch{ return null; }
     }
-
-    function goDirect(url) {
-      // Navigiert die PWA direkt zur Zielseite (kein Safari-UI sichtbar)
-      window.location.assign(url);
-    }
+    function goDirect(url){ window.location.assign(url); }
 
     openBtn.addEventListener('click', () => {
       const normalized = normalizeUrl(ipInput.value);
       if (!normalized) {
-        errorEl.textContent = 'Ungültige Adresse. Erlaubt sind: IP/localhost/*.local (http/https) oder beliebige https‑Domains (z. B. https://example.com).';
+        errorEl.textContent = 'Ungültige Adresse. Erlaubt sind: IP/localhost/*.local (http/https) oder https‑Domains (z. B. https://example.com).';
         return;
       }
       errorEl.textContent = '';
       goDirect(normalized);
     });
+    ipInput.addEventListener('keyup', (e)=>{ if(e.key==='Enter') openBtn.click(); });
 
-    ipInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') openBtn.click(); });
-
-    // Hinweistexte je nach Plattform
+    // iOS Hinweis
     const ua = navigator.userAgent.toLowerCase();
     if (/iphone|ipad|ipod/.test(ua) && !isStandalone()) {
       const el = document.getElementById('installNotice');
       if (el) el.textContent = 'iOS: Tippe unten auf „Teilen“ → „Zum Home‑Bildschirm“.';
     }
+
+    // Coden: Monaco Editor
+    let editor;
+    const example = `// Flashino – Arduino Beispiel
+// Blinke die eingebaute LED (Pin 13 auf vielen Boards)
+
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
+}
+`;
+
+    // Monaco laden
+    require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }});
+    window.MonacoEnvironment = { getWorkerUrl: function () { return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+      self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/' };
+      importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/base/worker/workerMain.js');`)}`; }};
+
+    function initEditor(){
+      require(['vs/editor/editor.main'], function(){
+        editor = monaco.editor.create(document.getElementById('editor'), {
+          value: example,
+          language: 'cpp',
+          theme: 'vs-dark',
+          automaticLayout: true,
+          fontSize: 14,
+          minimap: { enabled: false },
+          scrollbar: { verticalScrollbarSize: 12, horizontalScrollbarSize: 12 }
+        });
+      });
+    }
+    // Editor erst initialisieren, wenn Tab „Coden“ geöffnet wird (spart Ladezeit)
+    let editorInitialized = false;
+    tabCode.addEventListener('click', () => {
+      if (!editorInitialized) { initEditor(); editorInitialized = true; }
+    });
+
+    // Toolbar-Aktionen
+    document.getElementById('btnExample').addEventListener('click', () => {
+      if (editor) editor.setValue(example);
+    });
+    document.getElementById('btnNew').addEventListener('click', () => {
+      if (editor) editor.setValue(`// Neuer Sketch
+void setup(){}
+
+void loop(){}
+`);
+    });
+    document.getElementById('btnDownload').addEventListener('click', () => {
+      if (!editor) return;
+      const blob = new Blob([editor.getValue()], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'flashino_sketch.ino';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+    });
   </script>
 </body>
 </html>
