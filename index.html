@@ -93,7 +93,7 @@
             Nicht als Web App installiert. Tippe auf „Teilen“ und dann „Zum Home‑Bildschirm hinzufügen“, um Flashino als Web App zu nutzen.
           </div>
           <div class="notice" id="installedNotice" style="display:none;margin-top:16px">
-            Flashino läuft als Web App. Du kannst diese Seite direkt über das Icon auf dem Home‑Bildschirm starten.
+            Flashino läuft als Web App.☺️
           </div>
         </div>
       </div>
@@ -111,7 +111,7 @@
         <div id="editor"></div>
       </div>
       <p class="notice" style="margin-top:12px">
-        Hinweis: Dies ist ein Editor im Browser. Kompilieren/Flashen erfolgt weiterhin über deinen Flash‑Server.
+        Hinweis: Dies ist ein Editor im Browser. Kompilieren/Flashen erfolgt über das Flash‑Menü.
       </p>
     </section>
   </main>
@@ -197,18 +197,82 @@
     // Coden: Monaco Editor
     let editor;
     const example = `// Flashino – Arduino Beispiel
-// Blinke die eingebaute LED (Pin 13 auf vielen Boards)
+// Blinke Flashino mit der Eingebauten LED (Pin 13 auf vielen Boards)
+
+
+// Blinkt "FLASHINO" als Morsecode mit der eingebauten LED
+
+const int LED = LED_BUILTIN;
+const int UNIT = 150; // Basisdauer in Millisekunden (anpassen nach Bedarf)
+
+struct MorseMap { char c; const char* code; };
+
+MorseMap MORSE_TABLE[] = {
+  {'A', ".-"},   {'B', "-..."}, {'C', "-.-."}, {'D', "-.."},  {'E', "."},
+  {'F', "..-."}, {'G', "--."},  {'H', "...."}, {'I', ".."},   {'J', ".---"},
+  {'K', "-.-"},  {'L', ".-.."}, {'M', "--"},   {'N', "-."},   {'O', "---"},
+  {'P', ".--."}, {'Q', "--.-"}, {'R', ".-."},  {'S', "..."},  {'T', "-"},
+  {'U', "..-"},  {'V', "...-"}, {'W', ".--"},  {'X', "-..-"}, {'Y', "-.--"},
+  {'Z', "--.."}
+};
+
+const char* MESSAGE = "FLASHINO";
+
+void dot() {
+  digitalWrite(LED, HIGH);
+  delay(UNIT);
+  digitalWrite(LED, LOW);
+  delay(UNIT); // Pause zwischen Symbolen
+}
+
+void dash() {
+  digitalWrite(LED, HIGH);
+  delay(3 * UNIT);
+  digitalWrite(LED, LOW);
+  delay(UNIT); // Pause zwischen Symbolen
+}
+
+const char* lookupMorse(char ch) {
+  if (ch >= 'a' && ch <= 'z') ch = ch - 'a' + 'A';
+  for (unsigned int i = 0; i < sizeof(MORSE_TABLE)/sizeof(MorseMap); i++) {
+    if (MORSE_TABLE[i].c == ch) return MORSE_TABLE[i].code;
+  }
+  return nullptr;
+}
+
+void blinkChar(char ch) {
+  const char* code = lookupMorse(ch);
+  if (!code) return;
+
+  for (const char* p = code; *p; ++p) {
+    if (*p == '.') dot();
+    else if (*p == '-') dash();
+  }
+  // zusätzliche Pause zwischen Buchstaben (wir hatten schon 1 UNIT nach letztem Symbol)
+  delay(2 * UNIT); // insgesamt 3 UNIT
+}
+
+void blinkWord(const char* text) {
+  for (const char* p = text; *p; ++p) {
+    if (*p == ' ') {
+      // Wortabstand: insgesamt 7 UNIT, aber nach letztem Symbol gab es 1 UNIT.
+      delay(6 * UNIT);
+    } else {
+      blinkChar(*p);
+    }
+  }
+  // Nach Wortende längere Pause, bevor erneut gesendet wird
+  delay(7 * UNIT);
+}
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED, OUTPUT);
 }
 
 void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(500);
+  blinkWord(MESSAGE);
 }
+
 `;
 
     // Monaco laden
