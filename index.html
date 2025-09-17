@@ -109,7 +109,7 @@
             Flashino läuft als Web App.☺️
           </div>
 
-          <!-- Hinweis, falls Popup blockiert -->
+          <!-- Hinweis Popup blockiert -->
           <div class="notice" id="popupBlocked" style="display:none;margin-top:12px"></div>
         </div>
       </div>
@@ -170,12 +170,7 @@
       });
     }
 
-    // ---- Flashen: Öffnen in neuem Fenster/Tab (Popup) ----
-    const ipInput = document.getElementById('ip');
-    const errorEl = document.getElementById('error');
-    const flashForm = document.getElementById('flashForm');
-    const popupBlockedEl = document.getElementById('popupBlocked');
-
+    // Hilfsfunktionen zur Validierung
     function isValidIPv4(host){
       if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) return false;
       return host.split('.').every(o => +o>=0 && +o<=255);
@@ -187,7 +182,7 @@
       return /^(localhost|flashino|[a-z0-9-]+\.local)$/i.test(host);
     }
 
-    // Port 5000 automatisch anhängen, außer already present oder anderer Port gesetzt
+    // Port 5000 anfügen, falls kein Port vorhanden ist
     function ensurePort5000(url){
       try{
         const u = new URL(url);
@@ -200,6 +195,7 @@
       }
     }
 
+    // Normalisiert Eingabe und prüft URL
     function normalizeUrl(input){
       let value = (input || '').trim();
       if (!value) return null;
@@ -223,8 +219,13 @@
       }
     }
 
-    // Öffne Popup synchron im Submit-Event, damit Browser es nicht blockiert
-    flashForm.addEventListener('submit', (e)=>{
+    // Öffnet die URL im neuen Tab beim Formular-Submit
+    const ipInput = document.getElementById('ip');
+    const errorEl = document.getElementById('error');
+    const flashForm = document.getElementById('flashForm');
+    const popupBlockedEl = document.getElementById('popupBlocked');
+
+    flashForm.addEventListener('submit', e => {
       e.preventDefault();
       popupBlockedEl.style.display = 'none';
       popupBlockedEl.textContent = '';
@@ -236,23 +237,11 @@
       }
       errorEl.textContent = '';
 
-      // Neues Fenster sofort öffnen (leere Seite/Ladehinweis)
-      const w = window.open('', '_blank', 'noopener,noreferrer');
+      const w = window.open(normalized, '_blank', 'noopener,noreferrer');
       if (!w) {
-        // Popup blockiert -> Fallback-Link anzeigen
         popupBlockedEl.style.display = 'block';
         popupBlockedEl.innerHTML = `Popup wurde blockiert. Öffne die Seite manuell: <a href="${normalized}" target="_blank" rel="noopener noreferrer">${normalized}</a>`;
-        return;
       }
-
-      // Kurzer Ladehinweis, dann URL setzen
-      try {
-        w.document.write('<!doctype html><title>Lade…</title><p style="font-family:system-ui;margin:24px">Lade Ziel…</p>');
-        w.document.close();
-      } catch {}
-
-      // Jetzt tatsächliche Ziel-URL laden
-      w.location.href = normalized;
     });
 
     // iOS Hinweis
