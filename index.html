@@ -63,6 +63,10 @@
       outline-offset: 2px;
       border-radius: 10px;
     }
+
+    .visually-hidden{
+      position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
   </style>
 
   <!-- Monaco Editor via CDN -->
@@ -87,8 +91,7 @@
     <!-- Flashen -->
     <section id="sectionFlash" class="section active">
       <div class="card wrap" id="flashCard">
-        <!-- Formular -->
-        <div style="width:100%;max-width:640px" id="flashFormWrap">
+        <div style="width:100%;max-width:640px">
           <h1>Herzlich willkommen bei Flashino</h1>
           <p class="tagline">Bitte gib die IP-Adresse ein, die angezeigt wird.</p>
 
@@ -105,18 +108,9 @@
           <div class="notice" id="installedNotice" style="display:none;margin-top:16px">
             Flashino läuft als Web App.☺️
           </div>
-        </div>
 
-        <!-- Eingebettetes Flash-UI -->
-        <div id="flashEmbedWrap" style="display:none;width:100%;max-width:960px">
-          <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:8px;width:100%">
-            <button class="btn secondary" id="btnBack" type="button">Zurück</button>
-            <div class="tagline" id="flashStatus">Lade…</div>
-          </div>
-          <iframe id="flashFrame" title="Flash-Ziel" style="width:100%;height:70vh;border:1px solid #1b2750;border-radius:12px;background:#0a1020"></iframe>
-          <div class="notice" style="margin-top:8px">
-            Hinweis: Falls die Zielseite das Einbetten blockiert (X-Frame-Options/CSP), kann der Inhalt leer bleiben.
-          </div>
+          <!-- Hinweis, falls Popup blockiert -->
+          <div class="notice" id="popupBlocked" style="display:none;margin-top:12px"></div>
         </div>
       </div>
     </section>
@@ -176,41 +170,12 @@
       });
     }
 
-    // ---- Flashen: eingebettet via iframe (ohne Popup) ----
+    // ---- Flashen: Öffnen in neuem Fenster/Tab (Popup) ----
     const ipInput = document.getElementById('ip');
     const errorEl = document.getElementById('error');
     const flashForm = document.getElementById('flashForm');
+    const popupBlockedEl = document.getElementById('popupBlocked');
 
-    const flashFormWrap = document.getElementById('flashFormWrap');
-    const flashEmbedWrap = document.getElementById('flashEmbedWrap');
-    const flashFrame = document.getElementById('flashFrame');
-    const flashStatus = document.getElementById('flashStatus');
-    const btnBack = document.getElementById('btnBack');
-
-    btnBack.addEventListener('click', hideEmbed);
-
-    function showEmbed(url){
-      flashStatus.textContent = 'Lade…';
-      flashFrame.src = url;
-      flashFormWrap.style.display = 'none';
-      flashEmbedWrap.style.display = 'block';
-      if (showEmbed._timer) clearTimeout(showEmbed._timer);
-      showEmbed._timer = setTimeout(()=>{
-        flashStatus.textContent = 'Konnte nicht laden. Evtl. blockiert die Zielseite das Einbetten.';
-      }, 6000);
-    }
-    flashFrame.addEventListener('load', ()=>{
-      if (showEmbed._timer) clearTimeout(showEmbed._timer);
-      flashStatus.textContent = 'Bereit';
-    });
-    function hideEmbed(){
-      flashFrame.src = 'about:blank';
-      flashEmbedWrap.style.display = 'none';
-      flashFormWrap.style.display = 'block';
-      flashStatus.textContent = '';
-    }
-
-    // URL/Host Checks
     function isValidIPv4(host){
       if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) return false;
       return host.split('.').every(o => +o>=0 && +o<=255);
@@ -222,19 +187,12 @@
       return /^(localhost|flashino|[a-z0-9-]+\.local)$/i.test(host);
     }
 
-    // Port-Logik:
-    // - Wenn KEIN Port vorhanden -> 5000 anhängen
-    // - Wenn Port vorhanden und NICHT 5000 -> belassen
-    // - Wenn Port 5000 -> unverändert
+    // Port 5000 automatisch anhängen, außer already present oder anderer Port gesetzt
     function ensurePort5000(url){
       try{
         const u = new URL(url);
         if (!u.port) {
           u.port = '5000';
-        } else if (u.port === '5000') {
-          // passt
-        } else {
-          // anderer Port -> nichts tun
         }
         return u.toString();
       }catch{
@@ -265,16 +223,36 @@
       }
     }
 
-    // Direkt ohne Popup einbetten
+    // Öffne Popup synchron im Submit-Event, damit Browser es nicht blockiert
     flashForm.addEventListener('submit', (e)=>{
       e.preventDefault();
+      popupBlockedEl.style.display = 'none';
+      popupBlockedEl.textContent = '';
+
       const normalized = normalizeUrl(ipInput.value);
       if (!normalized) {
         errorEl.textContent = 'Ungültige Adresse. Erlaubt: http/https mit IP (z. B. 192.168.0.42), IPv6 (z. B. http://[::1]), localhost oder *.local; Domains mit https.';
         return;
       }
       errorEl.textContent = '';
-      showEmbed(normalized);
+
+      // Neues Fenster sofort öffnen (leere Seite/Ladehinweis)
+      const w = window.open('', '_blank', 'noopener,noreferrer');
+      if (!w) {
+        // Popup blockiert -> Fallback-Link anzeigen
+        popupBlockedEl.style.display = 'block';
+        popupBlockedEl.innerHTML = `Popup wurde blockiert. Öffne die Seite manuell: <a href="${normalized}" target="_blank" rel="noopener noreferrer">${normalized}</a>`;
+        return;
+      }
+
+      // Kurzer Ladehinweis, dann URL setzen
+      try {
+        w.document.write('<!doctype html><title>Lade…</title><p style="font-family:system-ui;margin:24px">Lade Ziel…</p>');
+        w.document.close();
+      } catch {}
+
+      // Jetzt tatsächliche Ziel-URL laden
+      w.location.href = normalized;
     });
 
     // iOS Hinweis
