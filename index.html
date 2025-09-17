@@ -44,6 +44,7 @@
     .btn{background:var(--brand);color:#fff;border:none;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(29,89,255,.35);transition:transform .06s ease, box-shadow .2s ease}
     .btn:active{transform:translateY(1px);box-shadow:0 6px 12px rgba(29,89,255,.3)}
     .btn.secondary{background:#1f2937;box-shadow:none}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
     .notice{margin-top:12px;font-size:14px;color:var(--muted)}
     .error{color:#fda4af;margin-top:8px;font-size:14px}
     .grid-two{display:grid;grid-template-columns:1fr;gap:16px}
@@ -55,6 +56,45 @@
     .chip{display:inline-flex;align-items:center;gap:8px;background:#0f1b33;border:1px solid #1d2a44;color:#c7d2fe;padding:8px 12px;border-radius:999px;font-size:13px}
     #editor{width:100%;height:480px}
     .foot{padding:16px 24px 22px;color:#8aa4ff;font-size:13px;text-align:center}
+
+    /* Fokus */
+    .tab:focus-visible, .btn:focus-visible, input:focus-visible {
+      outline: 2px solid var(--brand2);
+      outline-offset: 2px;
+      border-radius: 10px;
+    }
+
+    /* Modal/Popup */
+    .modal-backdrop{
+      position: fixed; inset: 0; display: grid; place-items: center;
+      background: rgba(0,0,0,.45); z-index: 999;
+      backdrop-filter: blur(2px);
+    }
+    .modal{
+      width: min(600px, 90vw);
+      background: linear-gradient(180deg,#0e1528,#0a1020);
+      border: 1px solid #1b2750; border-radius: var(--radius);
+      box-shadow: 0 40px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+      overflow: hidden;
+    }
+    .modal-header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:14px 16px; border-bottom:1px solid #1b2750; background:#0c1224;
+    }
+    .modal-title{ font-weight:800; letter-spacing:.2px }
+    .modal-close{
+      background:transparent; color:#cbd5ff; border:none; font-size:22px; line-height:1;
+      width:36px; height:36px; border-radius:10px; cursor:pointer;
+    }
+    .modal-close:hover{ background:#111829 }
+    .modal-body{ padding:16px; color: var(--text) }
+    .modal-footer{
+      display:flex; gap:8px; justify-content:flex-end; padding:12px 16px; border-top:1px solid #1b2750;
+    }
+
+    .visually-hidden{
+      position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
   </style>
 
   <!-- Monaco Editor via CDN -->
@@ -78,15 +118,17 @@
   <main class="container">
     <!-- Flashen -->
     <section id="sectionFlash" class="section active">
-      <div class="card wrap">
-        <div style="width:100%;max-width:640px">
+      <div class="card wrap" id="flashCard">
+        <!-- Formular -->
+        <div style="width:100%;max-width:640px" id="flashFormWrap">
           <h1>Herzlich willkommen bei Flashino</h1>
           <p class="tagline">Bitte gib die IP-Adresse ein, die angezeigt wird.</p>
 
-          <div class="input-row" style="margin-top:16px">
-            <input id="ip" type="text" inputmode="decimal" placeholder="z. B. 192.168.0.42:8080 oder https://example.com" autocomplete="off" />
-            <button class="btn" id="openBtn">Weiter</button>
-          </div>
+          <form id="flashForm" class="input-row" style="margin-top:16px">
+            <label class="visually-hidden" for="ip">Zieladresse</label>
+            <input id="ip" name="ip" type="text" inputmode="decimal" placeholder="z. B. 192.168.0.42 oder https://example.com" autocomplete="off" />
+            <button class="btn" id="openBtn" type="submit">Weiter</button>
+          </form>
           <div class="error" id="error"></div>
 
           <div class="notice" id="installNotice" style="margin-top:16px">
@@ -94,6 +136,18 @@
           </div>
           <div class="notice" id="installedNotice" style="display:none;margin-top:16px">
             Flashino läuft als Web App.☺️
+          </div>
+        </div>
+
+        <!-- Eingebettetes Flash-UI -->
+        <div id="flashEmbedWrap" style="display:none;width:100%;max-width:960px">
+          <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:8px;width:100%">
+            <button class="btn secondary" id="btnBack" type="button">Zurück</button>
+            <div class="tagline" id="flashStatus">Lade…</div>
+          </div>
+          <iframe id="flashFrame" title="Flash-Ziel" style="width:100%;height:70vh;border:1px solid #1b2750;border-radius:12px;background:#0a1020"></iframe>
+          <div class="notice" style="margin-top:8px">
+            Hinweis: Falls die Zielseite das Einbetten blockiert (X-Frame-Options/CSP), kann der Inhalt leer bleiben. In dem Fall Proxy nutzen.
           </div>
         </div>
       </div>
@@ -104,10 +158,10 @@
       <div class="card" id="editorCard">
         <div id="editorToolbar">
           <span class="chip">Arduino/C++</span>
-          <button class="btn secondary" id="btnExample">Beispiel laden</button>
-          <button class="btn secondary" id="btnNew">Neu</button>
-          <button class="btn" id="btnCopy">Code kopieren</button>
-          <button class="btn" id="btnDownload">Als .ino speichern</button>
+          <button class="btn secondary" id="btnExample" type="button">Beispiel laden</button>
+          <button class="btn secondary" id="btnNew" type="button">Neu</button>
+          <button class="btn" id="btnCopy" type="button">Code kopieren</button>
+          <button class="btn" id="btnDownload" type="button">Als .ino speichern</button>
         </div>
         <div id="editor"></div>
       </div>
@@ -118,6 +172,21 @@
   </main>
 
   <div class="foot">Made with ❤️ für Schüler • Flashino</div>
+
+  <!-- Popup / Modal -->
+  <div id="modalBackdrop" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Hinweis</div>
+        <button class="modal-close" id="modalClose" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body" id="modalBody">Das ist ein einfaches Popup.</div>
+      <div class="modal-footer">
+        <button class="btn secondary" id="modalCancel" type="button">Abbrechen</button>
+        <button class="btn" id="modalOk" type="button">OK</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // Tabs
@@ -147,46 +216,172 @@
     updateInstallUI();
     window.matchMedia('(display-mode: standalone)').addEventListener('change', updateInstallUI);
 
-    // Service Worker (unverändert)
+    // Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(console.error);
       });
     }
 
-    // Flashen: direkte Navigation (kein iframe)
+    // ---- Modal API ----
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+    const modalOk = document.getElementById('modalOk');
+    const modalCancel = document.getElementById('modalCancel');
+
+    function openModal({ title = 'Hinweis', html = '', onOk = null, onCancel = null } = {}){
+      const titleEl = document.getElementById('modalTitle');
+      titleEl.textContent = title;
+
+      if (typeof html === 'string') modalBody.innerHTML = html;
+      else { modalBody.innerHTML = ''; modalBody.appendChild(html); }
+
+      const cleanup = ()=>{
+        modalOk.onclick = null;
+        modalCancel.onclick = null;
+        modalClose.onclick = null;
+        modalBackdrop.removeEventListener('click', backdropHandler);
+        document.removeEventListener('keydown', escHandler);
+      };
+      const close = ()=>{
+        modalBackdrop.hidden = true;
+        document.body.style.overflow = '';
+        cleanup();
+      };
+      const backdropHandler = (e)=>{
+        if (e.target === modalBackdrop) { close(); onCancel && onCancel(); }
+      };
+      const escHandler = (e)=>{
+        if (e.key === 'Escape') { close(); onCancel && onCancel(); }
+      };
+
+      modalOk.onclick = ()=>{ close(); onOk && onOk(); };
+      modalCancel.onclick = ()=>{ close(); onCancel && onCancel(); };
+      modalClose.onclick = ()=>{ close(); onCancel && onCancel(); };
+      modalBackdrop.addEventListener('click', backdropHandler);
+      document.addEventListener('keydown', escHandler);
+
+      modalBackdrop.hidden = false;
+      document.body.style.overflow = 'hidden';
+      setTimeout(()=>modalClose.focus(), 0);
+    }
+
+    // ---- Flashen: eingebettet via iframe ----
     const ipInput = document.getElementById('ip');
     const openBtn = document.getElementById('openBtn');
     const errorEl = document.getElementById('error');
+    const flashForm = document.getElementById('flashForm');
+
+    const flashFormWrap = document.getElementById('flashFormWrap');
+    const flashEmbedWrap = document.getElementById('flashEmbedWrap');
+    const flashFrame = document.getElementById('flashFrame');
+    const flashStatus = document.getElementById('flashStatus');
+    const btnBack = document.getElementById('btnBack');
+
+    btnBack.addEventListener('click', hideEmbed);
+
+    function showEmbed(url){
+      flashStatus.textContent = 'Lade…';
+      flashFrame.src = url;
+      flashFormWrap.style.display = 'none';
+      flashEmbedWrap.style.display = 'block';
+      // Timeout für Fehlersignal
+      if (showEmbed._timer) clearTimeout(showEmbed._timer);
+      showEmbed._timer = setTimeout(()=>{
+        flashStatus.textContent = 'Konnte nicht laden. Evtl. blockiert die Zielseite das Einbetten.';
+      }, 6000);
+    }
+    flashFrame.addEventListener('load', ()=>{
+      if (showEmbed._timer) clearTimeout(showEmbed._timer);
+      flashStatus.textContent = 'Bereit';
+    });
+    function hideEmbed(){
+      flashFrame.src = 'about:blank';
+      flashEmbedWrap.style.display = 'none';
+      flashFormWrap.style.display = 'block';
+      flashStatus.textContent = '';
+    }
+
+    // URL/Host Checks
+    function isValidIPv4(host){
+      if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) return false;
+      return host.split('.').every(o => +o>=0 && +o<=255);
+    }
+    function isValidIPv6(host){
+      // Grob: enthält Hex/Doppelpunkte; URL.hostname liefert IPv6 ohne []
+      return /^[0-9a-f:]+$/i.test(host) && host.includes(':');
+    }
+    function isLocalName(host){
+      return /^(localhost|flashino|[a-z0-9-]+\.local)$/i.test(host);
+    }
+
+    // Port-Logik:
+    // - Wenn KEIN Port vorhanden -> 5000 anhängen
+    // - Wenn Port vorhanden und NICHT 5000 -> belassen (nicht doppelt setzen)
+    // - Wenn Port 5000 -> unverändert
+    function ensurePort5000(url){
+      try{
+        const u = new URL(url);
+        if (!u.port) {
+          u.port = '5000';
+        } else if (u.port === '5000') {
+          // already 5000, do nothing
+        } else {
+          // anderer Port vorhanden -> lassen
+        }
+        return u.toString();
+      }catch{
+        return url;
+      }
+    }
 
     function normalizeUrl(input){
       let value = (input || '').trim();
       if (!value) return null;
+
+      // Schema ergänzen
       if (!/^https?:\/\//i.test(value)) value = 'http://' + value;
+
       try{
         const url = new URL(value);
         const host = url.hostname;
-        const isIPv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
-        const isIPv6 = host.includes(':');
-        const isLocalName = /^(localhost|flashino|[a-z0-9-]+\.local)$/i.test(host);
-        const isHttpsDomain = url.protocol === 'https:' && !(isIPv4||isIPv6||isLocalName);
-        const isHttpAndLocal = url.protocol === 'http:' && (isIPv4||isIPv6||isLocalName);
-        if (isHttpsDomain || isHttpAndLocal || isIPv4 || isIPv6 || isLocalName) return url.toString();
-        return null;
-      }catch{ return null; }
-    }
-    function goDirect(url){ window.location.assign(url); }
+        const ipv4 = isValidIPv4(host);
+        const ipv6 = isValidIPv6(host);
+        const local = isLocalName(host);
 
-    openBtn.addEventListener('click', () => {
+        const httpsDomain = url.protocol === 'https:' && !(ipv4 || ipv6 || local);
+        const httpAndLocal = url.protocol === 'http:' && (ipv4 || ipv6 || local);
+
+        // Erlaubte Fälle:
+        if (httpsDomain || httpAndLocal || ipv4 || ipv6 || local) {
+          // Port-Regel anwenden
+          return ensurePort5000(url.toString());
+        }
+        return null;
+      }catch{
+        return null;
+      }
+    }
+
+    // Formular-Submit mit Popup-Bestätigung
+    flashForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
       const normalized = normalizeUrl(ipInput.value);
       if (!normalized) {
-        errorEl.textContent = 'Ungültige Adresse. Erlaubt sind: IP/localhost/*.local (http/https) oder https‑Domains (z. B. https://example.com).';
+        errorEl.textContent = 'Ungültige Adresse. Erlaubt: http/https mit IP (z. B. 192.168.0.42), IPv6 (z. B. http://[::1]:8080), localhost oder *.local; Domains mit https.';
         return;
       }
       errorEl.textContent = '';
-      goDirect(normalized);
+
+      openModal({
+        title: 'Ziel öffnen',
+        html: `Mit <b>${normalized}</b> verbinden und Flash‑Seite hier einbetten?`,
+        onOk: ()=> showEmbed(normalized)
+      });
     });
-    ipInput.addEventListener('keyup', (e)=>{ if(e.key==='Enter') openBtn.click(); });
+
+    // Enter-Taste in Input triggert bereits Submit über Form; Keyup-Handler nicht nötig.
 
     // iOS Hinweis
     const ua = navigator.userAgent.toLowerCase();
@@ -195,7 +390,7 @@
       if (el) el.textContent = 'iOS: Tippe unten auf „Teilen“ → „Zum Home‑Bildschirm“.';
     }
 
-    // Coden: Monaco Editor
+    // ---- Coden: Monaco Editor ----
     let editor;
     const example = `// Flashino – Arduino Beispiel
 // Blinkt "FLASHINO" als Morsecode mit der eingebauten LED
@@ -246,7 +441,7 @@ void setup(){ pinMode(LED, OUTPUT); }
 void loop(){ blinkWord(MESSAGE); }
 `;
 
-    // Monaco laden
+    // Monaco laden erst bei Tab-Wechsel
     require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }});
     window.MonacoEnvironment = { getWorkerUrl: function () { return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
       self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/' };
@@ -261,11 +456,12 @@ void loop(){ blinkWord(MESSAGE); }
           automaticLayout: true,
           fontSize: 14,
           minimap: { enabled: false },
-          scrollbar: { verticalScrollbarSize: 12, horizontalScrollbarSize: 12 }
+          scrollbar: { verticalScrollbarSize: 12, horizontalScrollbarSize: 12 },
+          wordWrap: 'on',
+          ariaLabel: 'Arduino C++ Editor'
         });
       });
     }
-    // Editor erst initialisieren, wenn Tab „Coden“ geöffnet wird (spart Ladezeit)
     let editorInitialized = false;
     tabCode.addEventListener('click', () => {
       if (!editorInitialized) { initEditor(); editorInitialized = true; }
@@ -283,7 +479,6 @@ void loop(){}
 `);
     });
 
-    // NEU: Code kopieren
     const btnCopy = document.getElementById('btnCopy');
     btnCopy.addEventListener('click', async () => {
       if (!editor) return;
@@ -294,11 +489,13 @@ void loop(){}
         btnCopy.disabled = true;
         setTimeout(() => { btnCopy.textContent = old; btnCopy.disabled = false; }, 1500);
       } catch (e) {
-        // Fallback, falls Clipboard-API blockiert ist
         const ta = document.createElement('textarea');
         ta.value = editor.getValue();
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
         document.body.appendChild(ta);
-        ta.select(); document.execCommand('copy');
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); } catch {}
         ta.remove();
         const old = btnCopy.textContent;
         btnCopy.textContent = '✔️ Kopiert';
